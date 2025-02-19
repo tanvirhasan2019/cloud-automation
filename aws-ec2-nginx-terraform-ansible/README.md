@@ -93,7 +93,7 @@ Inbound:
 - Port 22 (SSH)
 
 Outbound:
-    - All traffic
+- All traffic
 
 ### Nginx Configuration
 The Ansible playbook:
