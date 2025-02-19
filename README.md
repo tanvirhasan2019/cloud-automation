@@ -2,7 +2,9 @@
 
 Welcome to the Cloud Automation repository! This repository contains various Infrastructure as Code (IaC) and automation projects for different cloud providers and services.
 
-![Cloud Automation](https://github.com/tanvirhasan2019/cloud-automation/blob/main/assets/main-banner.jpg?raw=true)
+<p align="center">
+  <img src="./assets/main-banner.jpg" width="400px" alt="Cloud Automation">
+</p>
 
 ## 📚 Projects
 
