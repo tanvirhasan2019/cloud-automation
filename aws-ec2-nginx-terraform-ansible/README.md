@@ -27,12 +27,13 @@ This project automates the deployment of an Nginx web server on AWS EC2 using Te
 AWS Account
 Terraform (>= 1.0.0)
 Ansible (>= 2.9)
-AWS CLI ```
+AWS CLI
+```
 
 ## AWS Credentials Setup
 Configure AWS credentials using one of the following methods:
 
 ## AWS CLI Configuration:
-```bash
+```
 aws configure
 ```
