@@ -19,7 +19,8 @@ This project automates the deployment of an Nginx web server on AWS EC2 using Te
     │       │   └── main.yml
     │       └── templates/
     │           └── index.html.j2
-    └── playbook.yml ```
+    └── playbook.yml
+```
 
 ## Prerequisites
 ````
