@@ -37,3 +37,42 @@ Configure AWS credentials using one of the following methods:
 ```
 aws configure
 ```
+
+## Environment Variables:
+```
+export AWS_ACCESS_KEY_ID="your_access_key"
+export AWS_SECRET_ACCESS_KEY="your_secret_key"
+export AWS_REGION="us-west-2"
+```
+
+## Infrastructure Components
+
+VPC with public subnet
+Internet Gateway
+Route Table
+Security Group (ports 22, 80)
+EC2 instance (t2.micro)
+SSH Key Pair
+
+### Installation & Deployment
+
+1. Clone the repository:
+```
+git clone <repository-url>
+cd <project-directory>
+```
+2. Initialize Terraform:
+```
+cd terraform
+terraform init
+```
+3. Review and apply Terraform configuration:
+```
+terraform plan
+terraform apply
+```
+4. Run Ansible playbook:
+```
+cd ../ansible
+ansible-playbook -i inventory/hosts.ini playbook.yml
+```
