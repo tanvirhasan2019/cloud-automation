@@ -1,4 +1,4 @@
-.
+```plaintext
 ├── README.md
 ├── terraform/
 │   ├── main.tf
@@ -15,5 +15,3 @@
     │       └── templates/
     │           └── index.html.j2
     └── playbook.yml
-
-    
