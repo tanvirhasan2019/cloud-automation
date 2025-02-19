@@ -6,7 +6,7 @@ Welcome to the Cloud Automation repository! This repository contains various Inf
 
 ## 📚 Projects
 
-### AWS Projects
+### AWS Projects <a href="https://aws.amazon.com/what-is-cloud-computing"><img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing"></a>
 | Project Name | Description | Technologies Used | Status |
 |--------------|-------------|-------------------|---------|
 | [aws-ec2-nginx-terraform-ansible](./aws-ec2-nginx-terraform-ansible) | Automated deployment of Nginx on AWS EC2 with complete infrastructure setup | ![Terraform](https://img.shields.io/badge/-Terraform-7B42BC?style=flat&logo=terraform&logoColor=white) ![Ansible](https://img.shields.io/badge/-Ansible-EE0000?style=flat&logo=ansible&logoColor=white) ![AWS](https://img.shields.io/badge/-AWS-232F3E?style=flat&logo=amazonaws&logoColor=white) | ✅ |
