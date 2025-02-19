@@ -96,12 +96,11 @@ Outbound:
 - All traffic
 
 ### Nginx Configuration
-The Ansible playbook:
-
-1. Updates system packages
-2. Installs Nginx
-3. Deploys custom index.html
-4. Ensures Nginx service is running
+- The Ansible playbook:
+- Updates system packages
+- Installs Nginx
+- Deploys custom index.html
+- Ensures Nginx service is running
 
 ## Accessing the Web Server
 After deployment:
