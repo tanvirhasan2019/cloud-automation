@@ -1,3 +1,8 @@
+# AWS EC2 Nginx Deployment with Terraform and Ansible
+## This project automates the deployment of an Nginx web server on AWS EC2 using Terraform for infrastructure provisioning and Ansible for configuration management.
+
+
+## Project Structure
 ```plaintext
 ├── README.md
 ├── terraform/
