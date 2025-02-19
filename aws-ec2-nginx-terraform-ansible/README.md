@@ -40,19 +40,19 @@ aws configure
 
 ## Environment Variables:
 ```
-export AWS_ACCESS_KEY_ID="your_access_key"
-export AWS_SECRET_ACCESS_KEY="your_secret_key"
-export AWS_REGION="us-west-2"
+    - export AWS_ACCESS_KEY_ID="your_access_key"
+    - export AWS_SECRET_ACCESS_KEY="your_secret_key"
+    - export AWS_REGION="us-west-2"
 ```
 
 ## Infrastructure Components
 
-VPC with public subnet
-Internet Gateway
-Route Table
-Security Group (ports 22, 80)
-EC2 instance (t2.micro)
-SSH Key Pair
+    - VPC with public subnet
+    - Internet Gateway
+    - Route Table
+    - Security Group (ports 22, 80)
+    - EC2 instance (t2.micro)
+    - SSH Key Pair
 
 ### Installation & Deployment
 
@@ -79,28 +79,23 @@ ansible-playbook -i inventory/hosts.ini playbook.yml
 
 ## Infrastructure Details
 ### VPC Configuration
-
-CIDR Block: 10.0.0.0/16
-Public Subnet: 10.0.1.0/24
-Region: us-west-2 (default, configurable)
+    - CIDR Block: 10.0.0.0/16
+    - Public Subnet: 10.0.1.0/24
+    - Region: us-west-2 (default, configurable)
 
 ### EC2 Instance
-
-Type: t2.micro
-OS: Ubuntu 22.04 LTS
-Volume: 8GB GP3
-Auto-assigned public IP: Yes
+    - Type: t2.micro
+    - OS: Ubuntu 22.04 LTS
+    - Volume: 8GB GP3
+    - Auto-assigned public IP: Yes
 
 ### Security Group Rules
-
 Inbound:
     - Port 80 (HTTP)
     - Port 22 (SSH)
 
 Outbound:
     - All traffic
-
-
 
 ### Nginx Configuration
 The Ansible playbook:
