@@ -1,7 +1,6 @@
 # AWS EC2 Nginx Deployment with Terraform and Ansible
 This project automates the deployment of an Nginx web server on AWS EC2 using Terraform for infrastructure provisioning and Ansible for configuration management.
 
-
 ## Project Structure
 ```plaintext
 ├── README.md
@@ -134,25 +133,25 @@ terraform destroy
 ## Security Considerations
 
 1. Production Modifications:
-- Restrict SSH access to specific IP ranges
-- Implement SSL/TLS
-- Use private subnets with NAT Gateway
-- Enable VPC flow logs
-- Implement proper IAM roles
+    - Restrict SSH access to specific IP ranges
+    - Implement SSL/TLS
+    - Use private subnets with NAT Gateway
+    - Enable VPC flow logs
+    - Implement proper IAM roles
 
 
 2. Key Management:
-- Secure the generated SSH key
-- Consider using AWS Secrets Manager
-- Rotate keys regularly
+    - Secure the generated SSH key
+    - Consider using AWS Secrets Manager
+    - Rotate keys regularly
   
 ## Customization
 ### Terraform Variables
 Modify terraform.tfvars to customize:
-    - AWS region
-    - AMI ID
-    - Instance type
-    - Key pair name
+- AWS region
+- AMI ID
+- Instance type
+- Key pair name
 
 ### Nginx Configuration
 Modify Ansible templates in:
