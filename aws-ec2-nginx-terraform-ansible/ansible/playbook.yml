@@ -1,0 +1,7 @@
+# ansible/playbook.yml
+---
+- hosts: webservers
+  become: yes
+  roles:
+    - nginx
+

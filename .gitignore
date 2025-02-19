@@ -1,0 +1,9 @@
+# Ignore Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Ignore the Terraform working directory
+.terraform/
+
+# Ignore private keys
+*.pem
