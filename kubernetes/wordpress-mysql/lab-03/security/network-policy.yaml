@@ -1,0 +1,73 @@
+# Note: Only apply network policies if your cluster has a 
+# network policy controller (like Calico or Cilium)
+# For local testing you may want to skip this file initially
+
+---
+# Network Policy for WordPress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wordpress-network-policy
+  namespace: lab3
+spec:
+  podSelector:
+    matchLabels:
+      app: wordpress
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow incoming HTTP traffic from anywhere
+  - ports:
+    - port: 80
+      protocol: TCP
+  egress:
+  # Allow outgoing traffic to MySQL
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mysql
+    ports:
+    - port: 3306
+      protocol: TCP
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+
+---
+# Network Policy for MySQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql-network-policy
+  namespace: lab3
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow MySQL traffic only from WordPress pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: wordpress
+    ports:
+    - port: 3306
+      protocol: TCP
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP

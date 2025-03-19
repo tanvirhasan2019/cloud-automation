@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: lab3
+data:
+  # Configuration for the primary MySQL server (mysql-0)
+  primary.cnf: |
+    [mysqld]
+    log-bin
+    binlog_format=ROW
+
+  # Configuration for replica MySQL servers (mysql-1, mysql-2, etc.)
+  replica.cnf: |
+    [mysqld]
+    super-read-only
+    log_bin
+    binlog_format=ROW
+    relay-log

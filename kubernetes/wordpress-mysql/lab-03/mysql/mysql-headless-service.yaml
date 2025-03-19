@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-headless
+  namespace: lab3
+  labels:
+    app: mysql
+spec:
+  clusterIP: None  # This makes it a headless service
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      name: mysql

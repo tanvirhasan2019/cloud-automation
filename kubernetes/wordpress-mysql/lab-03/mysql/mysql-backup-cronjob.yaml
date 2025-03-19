@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-backup
+  namespace: lab3
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: mysql:5.7
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Use mysqldump to create a backup of database
+              mysqldump -h  mysql-headless.lab3.svc.cluster.local \
+                        -u root -p${MYSQL_ROOT_PASSWORD} \
+                        --all-databases | gzip > /backup/backup-$(date +\%F).sql.gz
+              
+              # Report success
+              echo "Backup completed at $(date)"
+              ls -lh /backup
+            env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+            volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+          volumes:
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: backup-pvc

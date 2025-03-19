@@ -1,0 +1,39 @@
+---
+# ServiceAccount for WordPress pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: wordpress-sa
+  namespace: lab3
+---
+# Role with limited permissions for WordPress
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: wordpress-role
+  namespace: lab3
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+---
+# RoleBinding to associate the Role with the ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: wordpress-rolebinding
+  namespace: lab3
+subjects:
+- kind: ServiceAccount
+  name: wordpress-sa
+  namespace: lab3
+roleRef:
+  kind: Role
+  name: wordpress-role
+  apiGroup: rbac.authorization.k8s.io

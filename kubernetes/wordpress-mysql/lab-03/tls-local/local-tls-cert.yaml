@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wordpress-tls
+  namespace: lab3
+type: kubernetes.io/tls
+# In a real scenario, you would use cert-manager to automatically provision these
+# For local testing, you can manually create a self-signed certificate and use these commands:
+#
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=wordpress.local"
+# kubectl create secret tls wordpress-tls --key tls.key --cert tls.crt -n lab3
+#
+# For this demo, we're providing a placeholder - you should replace with actual values
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDETCCAfmgAwIBAgIUEsV5k6B1Zp51zqYHcP8+vOeRoaEwDQYJKoZIhvcNAQEL
+    BQAwGDEWMBQGA1UEAwwNd29yZHByZXNzLmRldjAeFw0yMDA3MDExMjAwMDBaFw0y
+    MTA3MDExMjAwMDBaMBgxFjAUBgNVBAMMDXdvcmRwcmVzcy5kZXYwggEiMA0GCSqG
+    SIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+9yCGwGT8B+jKr2WGIgSuiDWZc8EM0zsp
+    O36MNXBmZz0OxpBzQN27LpZGjY4tPJhAF8GU2Z7I1N4xyNOFtfKsLRrYZ0sHrTnZ
+    sVqbBkCnlRGqnJVNzQrVpoKlQo4XJtAqK5MZAPK1k9hhejQalKJi5SQIl+OSOQoY
+    JMshdlCNfBcRpQYjXzKTYvzFB0AAVySHvFBA9JeAR/Pm3QCuhY7AqNBFwTFsiLpU
+    UL3GjVK5Zjb+3JdPm8pLAzNzCQpZdfd8Td9erbsIrK89sQRUXyVVGD5aUQQWEiw4
+    aBLUhDsOQbCjxUPmPPqM74lPJIrMHWTXRTdnHcwBpA4bQxjQOx0DAgMBAAGjUzBR
+    MB0GA1UdDgQWBBTJEhDuB8QgZmQFYlQJbZR0vQg7jDAfBgNVHSMEGDAWgBTJEhDu
+    B8QgZmQFYlQJbZR0vQg7jDAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUA
+    A4IBAQCi5QRTZ8k0u9JwppEJ1k0xjUJQgS72sDjGx8q4cxKEgh1hIJQUvp1vVqrL
+    fKKQDmxMl2URG42M9t8GKUBXlQp4jAUJOWEcGzat0mPZTeJbmXuuKPSxVzAp0kCl
+    tkfcPpbLHZH4zZEV+Qk1MJdh6cLQHGLB8uon8KkDi0NVjfMHqL3h73tKNQP8QXBQ
+    8P65/SImYgWLFTCG/8jRKkYxbPiUiUJXsbbGJmvJGsLHnr6/6ZWk/IiYXR5GJFGK
+    EI4MeRN2JsG929mEYKH8MFPmXsSkXmZR33kgRwoHwmFpKLuGzHIFYkk1YIWsFrz3
+    oVYnLMPEpJrhw5u2QJF9FnC8zJbY
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC+9yCGwGT8B+jK
+    r2WGIgSuiDWZc8EM0zspO36MNXBmZz0OxpBzQN27LpZGjY4tPJhAF8GU2Z7I1N4x
+    yNOFtfKsLRrYZ0sHrTnZsVqbBkCnlRGqnJVNzQrVpoKlQo4XJtAqK5MZAPK1k9hh
+    ejQalKJi5SQIl+OSOQoYJMshdlCNfBcRpQYjXzKTYvzFB0AAVySHvFBA9JeAR/Pm
+    3QCuhY7AqNBFwTFsiLpUUL3GjVK5Zjb+3JdPm8pLAzNzCQpZdfd8Td9erbsIrK89
+    sQRUXyVVGD5aUQQWEiw4aBLUhDsOQbCjxUPmPPqM74lPJIrMHWTXRTdnHcwBpA4b
+    QxjQOx0DAgMBAAECggEBALeeMPGHEJ9m87lAHkWdQELpBGPijc4YYL3xSrgTqGEU
+    w0YnuPhEbGH1EZKKnhSMZswMXdWMYV0pLJ2FzhSECRpPzERxFfUFO9+qyfluC5L8
+    lExNHfJynze3QGzeZQM+JQBpmQxcTXNDcPKk7ZFXJaHHb5MjQXELR6D0TuMe1EuT
+    X5DIwbZ6Q2JgQ+/pJmqN9iZkGuQ1VS/D2Rp1XN0I0OUDgMtQtCGrRHDK+BK6kELB
+    GEf8huQnJLiLJBF5qty+vYz6J/N2OmrFJ1ZLHoTa8KUBqLvl0QEYI5GPaVzAzj9z
+    +Y7z3tipMRE+2gnECBQAX8A9A7TpB9/jLBWKXB/1iQECgYEA6+nxVrnAIcQUw1OH
+    ZOmXKrZWCmcU37N2N0KQfUV5QX+dlAx5QJBXqkMYfgV6GjgVOstc0+gCYfkEwqTR
+    VyZ+FtNJT4JYMj2Vej/3IRQaBZjxd+qGhZ5PVuP8bmFQQ6kzYQfxZBwigTYPgHnH
+    vVpGx1xZa8VaY1nSMnQimH8tYi0CgYEAz08yhNcwzgjEpgZmhgi1NivQEkEQz1zE
+    ifI18QVVv7arYX4Z86Pj/fwAGLVSb35HJ/nYUDOXKZ/jHlDDvZnCbGRvGXnzY4NJ
+    KHka4yFzAa3oNsC3F9vHsxJ5nL6ushR1Y8w5qWWfCQTJ7klcDDlkCDJNHbRzpIbW
+    m8hmxvZ5Kf8CgYAHHPqD/QYTzDQTLQjwn2bZvTN1IYSu8UZxpXPFjnIsd/dq8SAn
+    2AOO2YnILCpQCLxevz8kg/0EM0CUlGZiUzSNEKNzJKa1eDgEYqAQmNxSHAZZzY90
+    9VEgVD8QwcavHBBrQBMPJPa4mXTW8wlAjaSfwbfDgBcTbRdlk+2IqL/SbQKBgQCy
+    +sCZZrnGGsBQLRRQGZU8GnJhmQ6z6r1UBiFAe3K/1lHvM1ZrR0zKDl/ad//05UwW
+    9+PvxHJOHzfvJXbFd5+2aHJmZfyPCGhLPKFZ1lEQUiH7WNQs9ehuTXMK8QBaaiPQ
+    okG42q0YabbtCjVtO/gAzfLQEpE0U1j5eCHY3izG8QKBgQDpjExdZQfRFAQ+WZKf
+    eh/A7j9vgL5eQ9yRlOUxQyBgudJnWAY4nUfO6fx+eHQwjLKkqPQZxRsdOOGdKVSj
+    rmUQ+kZE+Bn1RN9JGbaB/1k2ZTtUjdzZ13W9+I+Gzri+9C8Ch5NqYTMpjHWnRX5M
+    +8CuaEe4qzfTNwEqBpGKqIqybA==
+    -----END PRIVATE KEY-----

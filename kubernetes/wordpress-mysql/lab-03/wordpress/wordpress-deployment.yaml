@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  namespace: lab3
+  labels:
+    app: wordpress
+    tier: frontend
+spec:
+  replicas: 2  # Reduced number of replicas for local testing
+  selector:
+    matchLabels:
+      app: wordpress
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:
+      serviceAccountName: wordpress-sa
+      containers:
+      - name: wordpress
+        image: wordpress:latest
+        ports:
+        - containerPort: 80
+          name: http
+        # Get environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: wordpress-config
+        # Additional environment variables
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: mysql-headless.lab3.svc.cluster.local  # Mysql  DNS 
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-password
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: wordpress-data
+          mountPath: /var/www/html
+        # Simplified probes with longer timeouts and more lenient settings
+        livenessProbe:
+          httpGet:
+            path: /wp-includes/images/blank.gif
+            port: 80
+          initialDelaySeconds: 120
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /wp-includes/images/blank.gif
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        # Use lifecycle hooks to handle shutdowns gracefully
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+      # Security context commented out to simplify local testing
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 33  # www-data user
+      #   fsGroup: 33    # www-data group
+      volumes:
+      - name: wordpress-data
+        persistentVolumeClaim:
+          claimName: wordpress-pvc

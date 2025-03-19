@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-config
+  namespace: lab3
+data:
+  # WordPress database configuration
+  WORDPRESS_DB_NAME: wordpress
+  WORDPRESS_TABLE_PREFIX: wp_
+  
+  # WordPress optimization settings - simplified to avoid duplicate constants
+  WORDPRESS_CONFIG_EXTRA: |
+    define('WP_MEMORY_LIMIT', '256M');
+    define('WP_MAX_MEMORY_LIMIT', '512M');
+    define('WP_CACHE', true);
+    
+  # PHP configuration for better performance
+  PHP_MEMORY_LIMIT: 256M
+  PHP_MAX_EXECUTION_TIME: "120"
+  PHP_POST_MAX_SIZE: 64M
+  PHP_UPLOAD_MAX_FILESIZE: 64M
