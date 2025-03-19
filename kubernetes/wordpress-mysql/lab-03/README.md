@@ -33,6 +33,7 @@ kubectl apply -f mysql/mysql-backup-cronjob.yaml
 # WordPress
 kubectl apply -f wordpress/wordpress-configmap.yaml
 kubectl apply -f wordpress/wordpress-pvc.yaml
+kubectl apply -f wordpress/wordpress-ingress-local.yaml
 kubectl apply -f wordpress/wordpress-deployment.yaml
 kubectl apply -f wordpress/wordpress-service.yaml
 kubectl apply -f wordpress/wordpress-nodeport-service.yaml
