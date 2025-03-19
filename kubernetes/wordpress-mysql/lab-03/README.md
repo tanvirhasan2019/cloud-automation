@@ -33,7 +33,6 @@ kubectl apply -f mysql/mysql-backup-cronjob.yaml
 # WordPress
 kubectl apply -f wordpress/wordpress-configmap.yaml
 kubectl apply -f wordpress/wordpress-pvc.yaml
-kubectl apply -f wordpress/wordpress-ingress-local.yaml
 kubectl apply -f wordpress/wordpress-deployment.yaml
 kubectl apply -f wordpress/wordpress-service.yaml
 kubectl apply -f wordpress/wordpress-nodeport-service.yaml
@@ -45,8 +44,15 @@ kubectl apply -f wordpress/wordpress-hpa.yaml
 # Via NodePort
 http://<node-ip>:30003
 
-# Via Ingress (add to /etc/hosts first: 127.0.0.1 wordpress.local)
+# Via Ingress
+# Add wordpress.local to /etc/hosts:
+echo "127.0.0.1 wordpress.local" | sudo tee -a /etc/hosts
+# Or for Minikube:
+# echo "$(minikube ip) wordpress.local" | sudo tee -a /etc/hosts
+
+# Apply the Ingress
 kubectl apply -f wordpress/wordpress-ingress-local.yaml
+# Access at:
 http://wordpress.local
 ```
 
