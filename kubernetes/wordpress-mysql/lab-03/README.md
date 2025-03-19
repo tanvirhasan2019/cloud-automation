@@ -16,6 +16,11 @@ kubectl apply -f security/rbac.yaml
 kubectl apply -f security/mysql-service-account.yaml
 kubectl apply -f security/pod-security-standards.yaml
 
+# TLS (for local testing)
+kubectl apply -f tls-local/local-tls-cert.yaml
+# Or for production with cert-manager:
+# kubectl apply -f tls/cluster-issuer-staging.yaml
+
 # MySQL
 kubectl apply -f mysql/mysql-config.yaml
 kubectl apply -f mysql/mysql-secret.yaml
@@ -59,5 +64,6 @@ kubectl delete namespace lab3
 - MySQL with configurable settings and backups
 - WordPress with multiple replicas and autoscaling
 - RBAC security controls
+- TLS encryption for secure access
 - Health checks and resource limits
 - Persistent storage for data durability
