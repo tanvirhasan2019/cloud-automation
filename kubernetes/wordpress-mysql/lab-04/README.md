@@ -1,226 +1,212 @@
-# Lab 04: Enterprise-Grade Kubernetes Architecture
+# Kubernetes Enterprise WordPress Deployment - Lab 04
 
-## Overview
+## 1. Overview
 
-This final lab transforms our WordPress and MySQL deployment into an enterprise-ready application platform using advanced Kubernetes patterns and tools. We'll implement:
+Lab 04 completes our Kubernetes learning progression with an enterprise-grade WordPress deployment. This lab demonstrates advanced deployment patterns, integrates service mesh, implements GitOps workflows, and incorporates production-level monitoring and security. Using Helm charts and environment-specific configurations, you'll build a scalable, resilient, and secure WordPress platform ready for enterprise use.
 
-1. **Helm Charts** for package management
-2. **Service Mesh** (Istio) for advanced networking
-3. **Monitoring Stack** with Prometheus and Grafana
-4. **GitOps** with Flux CD
-5. **Multi-cluster** configuration for high availability
+## 2. Prerequisites
 
-## Prerequisites
+- A Kubernetes cluster (EKS, GKE, AKS, or local minikube/kind/k3s)
+- `kubectl` configured to communicate with your cluster
+- Helm 3.x installed (`curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash`)
+- `istioctl` installed for service mesh capabilities
+- Domain name for Ingress configurations (or use a local hosts file entry)
+- Basic understanding of Kubernetes and previous labs (1-3)
 
-- Kubernetes cluster (v1.24+)
-- Helm 3.x
-- kubectl configured
-- Basic understanding of previous labs
-- Recommended: 4+ CPU cores, 8GB+ RAM
+## 3. Objectives
 
-## Lab Objectives
+- Deploy WordPress and MySQL using Helm charts with enterprise configurations
+- Implement multi-environment deployment strategies (dev/staging/production)
+- Configure service mesh for advanced traffic management
+- Set up comprehensive monitoring with Prometheus and Grafana
+- Establish GitOps workflow for continuous deployment
+- Implement production-grade security practices
+- Configure backup and recovery mechanisms
 
-- Implement WordPress and MySQL as Helm charts
-- Install and configure Istio service mesh
-- Set up monitoring with Prometheus and Grafana
-- Configure GitOps with Flux CD
-- Create multi-cluster configuration for disaster recovery
-
-## Directory Structure
+## 4. Directory Structure
 
 ```
 lab-04/
-├── README.md                                # Lab instructions
-├── helm-charts/                             # Helm charts for our applications
-│   ├── wordpress/                           # WordPress Helm chart
-│   │   ├── Chart.yaml                       # Chart metadata
-│   │   ├── values.yaml                      # Default configuration values
-│   │   ├── templates/                       # Kubernetes resource templates
-│   │   │   ├── _helpers.tpl                 # Template helpers
-│   │   │   ├── deployment.yaml              # WordPress deployment
-│   │   │   ├── hpa.yaml                     # Horizontal Pod Autoscaler
-│   │   │   ├── ingress.yaml                 # Ingress resource
-│   │   │   ├── pvc.yaml                     # Persistent Volume Claim
-│   │   │   ├── secrets.yaml                 # WordPress secrets
-│   │   │   ├── service.yaml                 # WordPress service
-│   │   │   ├── serviceaccount.yaml          # Service account
-│   │   │   └── configmap.yaml               # WordPress configuration
-│   │   └── values-production.yaml           # Production-specific values
-│   └── mysql/                               # MySQL Helm chart
-│       ├── Chart.yaml                       # Chart metadata
-│       ├── values.yaml                      # Default configuration values
-│       ├── templates/                       # Kubernetes resource templates
-│       │   ├── _helpers.tpl                 # Template helpers
-│       │   ├── configmap.yaml               # MySQL configuration
-│       │   ├── headless-service.yaml        # Headless service for StatefulSet
-│       │   ├── pvc.yaml                     # Persistent Volume Claim template
-│       │   ├── secrets.yaml                 # MySQL secrets
-│       │   ├── serviceaccount.yaml          # Service account
-│       │   └── statefulset.yaml             # MySQL StatefulSet
-│       └── values-production.yaml           # Production-specific values
-├── monitoring/                              # Monitoring configuration
-│   ├── grafana/
-│   │   ├── dashboard-configmap.yaml         # Pre-configured dashboards
-│   │   └── grafana-values.yaml              # Grafana Helm values
-│   ├── prometheus/
-│   │   ├── prometheus-values.yaml           # Prometheus Helm values
-│   │   └── service-monitors/                # ServiceMonitor CRDs
-│   │       ├── mysql-servicemonitor.yaml    # MySQL monitoring config
-│   │       └── wordpress-servicemonitor.yaml # WordPress monitoring config
-│   └── kube-prometheus-stack.yaml           # Helm release for Prometheus stack
-├── service-mesh/                            # Istio service mesh config
-│   ├── istio-installation.yaml              # IstioOperator resource
-│   ├── wordpress-gateway.yaml               # Istio Gateway for WordPress
-│   ├── wordpress-virtualservice.yaml        # VirtualService for traffic routing
-│   └── mysql-destinationrule.yaml           # DestinationRule for MySQL connections
-├── gitops/                                  # GitOps with Flux configuration
-│   ├── flux-installation.yaml               # Flux bootstrap configuration
-│   ├── wordpress-helmrelease.yaml           # HelmRelease for WordPress
-│   ├── mysql-helmrelease.yaml               # HelmRelease for MySQL
-│   └── kustomization.yaml                   # Kustomization resource
-└── multi-cluster/                           # Multi-cluster configuration
-    ├── cluster-config/                      # Configuration for clusters
-    │   ├── primary/                         # Primary cluster config
-    │   │   └── values-override.yaml         # Value overrides for primary
-    │   └── dr-cluster/                      # Disaster recovery cluster
-    │       └── values-override.yaml         # Value overrides for DR
-    └── global-load-balancing/               # Cross-cluster service discovery
-        └── wordpress-gslb.yaml              # Global load balancing config
+├── charts/
+│   ├── wordpress/           # WordPress Helm chart
+│   └── mysql/               # MySQL Helm chart with replication
+├── infrastructure/
+│   ├── istio/               # Service mesh configuration
+│   ├── monitoring/          # Prometheus and Grafana setup
+│   ├── security/            # Network policies and security controls
+│   └── cert-manager/        # TLS certificate automation
+├── gitops/
+│   ├── flux/                # Flux configuration
+│   └── argocd/              # ArgoCD configuration
+├── environments/
+│   ├── dev/                 # Development environment configs
+│   ├── staging/             # Staging environment configs
+│   └── production/          # Production environment configs
+└── README.md
 ```
 
-## Step-by-Step Guide
+## 5. Step-by-Step Guide
 
-### 1. Install Helm Charts
+### a. Install Infrastructure Components
 
-First, deploy MySQL and WordPress using the Helm charts:
+First, install required infrastructure components:
 
 ```bash
-# Create namespace
-kubectl create namespace wordpress
+# Install Istio service mesh
+istioctl install --set profile=demo
 
-# Deploy MySQL
-helm upgrade --install mysql ./helm-charts/mysql \
-  --namespace wordpress \
-  --values ./helm-charts/mysql/values.yaml
+# Install cert-manager for TLS certificates
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
-# Deploy WordPress
-helm upgrade --install wordpress ./helm-charts/wordpress \
-  --namespace wordpress \
-  --values ./helm-charts/wordpress/values.yaml \
-  --set mysql.host=mysql-primary
+# Install Prometheus operator for monitoring
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+
+# Add namespace labels for Istio injection
+kubectl label namespace default istio-injection=enabled
 ```
 
-### 2. Set Up Istio Service Mesh
+### b. Deploy MySQL Database
 
 ```bash
-# Create istio-system namespace
-kubectl create namespace istio-system
+# Create required secrets
+kubectl create secret generic mysql-credentials \
+  --from-literal=mysql-root-password=rootpassword \
+  --from-literal=mysql-password=wppassword \
+  --from-literal=mysql-replication-password=replpassword
 
-# Install Istio with IstioOperator
-kubectl apply -f service-mesh/istio-installation.yaml
-
-# Enable sidecar injection for wordpress namespace
-kubectl label namespace wordpress istio-injection=enabled
-
-# Apply Gateway and VirtualService
-kubectl apply -f service-mesh/wordpress-gateway.yaml
-kubectl apply -f service-mesh/wordpress-virtualservice.yaml
-kubectl apply -f service-mesh/mysql-destinationrule.yaml
+# Deploy MySQL with Helm
+helm install mysql ./charts/mysql -f ./environments/production/values-override.yaml
 ```
 
-### 3. Install Monitoring Stack
+### c. Deploy WordPress Application
 
 ```bash
-# Create monitoring namespace
-kubectl create namespace monitoring
+# Create WordPress secrets
+kubectl create secret generic wordpress-credentials \
+  --from-literal=wp-password=wppassword
 
-# Install Prometheus and Grafana
-kubectl apply -f monitoring/kube-prometheus-stack.yaml
-
-# Apply ServiceMonitors
-kubectl apply -f monitoring/prometheus/service-monitors/
+# Deploy WordPress with Helm
+helm install wordpress ./charts/wordpress -f ./environments/production/values-override.yaml
 ```
 
-### 4. Set Up GitOps with Flux CD
+### d. Configure Ingress and TLS
 
 ```bash
-# Install Flux CLI
-curl -s https://fluxcd.io/install.sh | sudo bash
+# Apply ClusterIssuer for certificates
+kubectl apply -f ./infrastructure/cert-manager/cluster-issuer.yaml
 
-# Bootstrap Flux (adjust GitHub parameters accordingly)
-flux bootstrap github \
-  --owner=YOUR_GITHUB_USER \
-  --repository=k8s-wordpress-gitops \
-  --branch=main \
-  --path=./clusters/my-cluster \
-  --personal
-
-# Apply Flux resources
-kubectl apply -f gitops/wordpress-helmrelease.yaml
-kubectl apply -f gitops/mysql-helmrelease.yaml
-kubectl apply -f gitops/kustomization.yaml
+# Apply Istio Gateway and Virtual Service
+kubectl apply -f ./infrastructure/istio/gateway.yaml
+kubectl apply -f ./infrastructure/istio/virtual-service.yaml
 ```
 
-### 5. Configure Multi-Cluster Deployment
+### e. Set Up GitOps (Choose one)
 
-For this step, you'll need a second Kubernetes cluster:
-
+For Flux:
 ```bash
-# In your primary cluster
-kubectl apply -f multi-cluster/cluster-config/primary/values-override.yaml
+# Install Flux components
+kubectl apply -f ./gitops/flux/gotk-components.yaml
 
-# In your DR cluster
-kubectl apply -f multi-cluster/cluster-config/dr-cluster/values-override.yaml
-
-# Set up global load balancing (if using a supported platform)
-kubectl apply -f multi-cluster/global-load-balancing/wordpress-gslb.yaml
+# Configure GitOps workflow
+kubectl apply -f ./gitops/flux/gotk-sync.yaml
 ```
 
-## Validation and Testing
-
-### Test WordPress Deployment
-
+For ArgoCD:
 ```bash
-# Get Istio ingress gateway IP
-export INGRESS_HOST=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+# Install ArgoCD
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# Access WordPress
-echo "Access WordPress at: http://$INGRESS_HOST"
+# Apply WordPress application
+kubectl apply -f ./gitops/argocd/application.yaml
 ```
 
-### Access Grafana Dashboards
+### f. Apply Security Policies
 
 ```bash
+# Apply network policies
+kubectl apply -f ./infrastructure/security/network-policies.yaml
+
+# Apply pod security standards
+kubectl apply -f ./infrastructure/security/pod-security-standards.yaml
+```
+
+## 6. Validation and Testing
+
+Verify your deployment with these commands:
+
+```bash
+# Check WordPress deployment
+kubectl get deployments,pods,svc -l app.kubernetes.io/name=wordpress
+
+# Verify MySQL StatefulSet and replication
+kubectl get statefulsets,pods,svc -l app.kubernetes.io/name=mysql
+
+# Test connectivity to the WordPress application
+curl -I https://wordpress.example.com
+
+# Check HPA configuration
+kubectl get hpa
+
+# Verify GitOps setup
+kubectl get gitrepositories,kustomizations -n flux-system
+# or
+kubectl get applications -n argocd
+```
+
+## 7. Access Grafana Dashboards
+
+Access the pre-configured monitoring dashboards:
+
+```bash
+# Get Grafana admin password
+kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+
 # Port-forward Grafana service
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
-
-# Access Grafana at http://localhost:3000
-# Default credentials: admin/prom-operator
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
 ```
 
-## Advanced Exercises
+Open your browser at http://localhost:3000 and navigate to the WordPress and MySQL dashboards.
 
-1. Implement canary deployments using Istio traffic splitting
-2. Set up disaster recovery testing between clusters
-3. Create custom Prometheus alerting rules
-4. Implement horizontal pod autoscaling based on custom metrics
-5. Set up automated backup and restore across clusters
+## 8. Advanced Exercises
 
-## Cleanup
+- Implement a canary deployment for WordPress using Istio
+- Set up a scheduled backup for both WordPress and MySQL
+- Configure alerts in Prometheus for critical conditions
+- Test scaling with artificial load using a tool like Apache JMeter
+- Implement a blue/green deployment pattern
+
+## 9. Learning Outcomes
+
+After completing this lab, you should understand:
+
+- Enterprise-grade Kubernetes deployment patterns
+- How to structure multi-environment configurations
+- Service mesh capabilities for traffic management and security
+- GitOps-based deployment strategies
+- Comprehensive monitoring and observability in Kubernetes
+- Production security best practices
+- High availability and disaster recovery approaches
+
+## 10. Cleanup
+
+To remove all resources created in this lab:
 
 ```bash
-# Remove all resources
-helm uninstall wordpress mysql -n wordpress
-kubectl delete namespace wordpress
-kubectl delete -f service-mesh/
-kubectl delete -f monitoring/
-flux uninstall --namespace=flux-system
-kubectl delete namespace istio-system monitoring flux-system
+# Remove applications
+helm uninstall wordpress mysql
+
+# Remove infrastructure components
+kubectl delete -f ./infrastructure/istio/
+kubectl delete -f ./infrastructure/cert-manager/
+helm uninstall prometheus -n monitoring
+
+# Remove GitOps components
+kubectl delete -f ./gitops/flux/
+# or
+kubectl delete -f ./gitops/argocd/
+
+# Remove namespaces (optional)
+kubectl delete namespace monitoring argocd flux-system
 ```
-
-## Next Steps
-
-- Explore Kubernetes Operators for automated management
-- Implement policy enforcement with OPA/Gatekeeper
-- Deploy serverless workloads with Knative
-- Set up CI/CD pipelines with Tekton or ArgoCD

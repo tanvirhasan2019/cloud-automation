@@ -1,0 +1,128 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "mysql.fullname" . }}-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.backup.retention.copies }}
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            {{- include "mysql.labels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "mysql.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: backup
+              image: "{{ .Values.backup.image.registry }}/{{ .Values.backup.image.repository }}:{{ .Values.backup.image.tag }}"
+              imagePullPolicy: {{ .Values.backup.image.pullPolicy }}
+              securityContext:
+                {{- toYaml .Values.containerSecurityContext | nindent 16 }}
+              command:
+                - /bin/bash
+                - -ec
+                - |
+                  # Set backup filename with timestamp
+                  BACKUP_FILENAME="mysql-backup-$(date +%Y%m%d-%H%M%S).sql.gz"
+                  BACKUP_DIR="/backup"
+                  
+                  echo "Starting MySQL backup to $BACKUP_DIR/$BACKUP_FILENAME..."
+                  
+                  # Perform backup and compress
+                  mysqldump \
+                    --host={{ include "mysql.fullname" . }} \
+                    --port=3306 \
+                    --user=root \
+                    --password="${MYSQL_ROOT_PASSWORD}" \
+                    --all-databases \
+                    --triggers \
+                    --routines \
+                    --events \
+                    --set-gtid-purged=OFF \
+                    {{- if .Values.backup.configuration.databases }}
+                    {{- range .Values.backup.configuration.databases }}
+                    {{ . }} \
+                    {{- end }}
+                    {{- end }}
+                    {{- if .Values.backup.configuration.options }}
+                    {{ .Values.backup.configuration.options }} \
+                    {{- end }}
+                    | gzip > "$BACKUP_DIR/$BACKUP_FILENAME"
+                  
+                  # Check if backup was successful
+                  if [ $? -eq 0 ]; then
+                    echo "Backup completed successfully: $BACKUP_FILENAME"
+                    
+                    # Cleanup old backups if retention is enabled
+                    if [ {{ .Values.backup.retention.days }} -gt 0 ]; then
+                      echo "Cleaning up backups older than {{ .Values.backup.retention.days }} days..."
+                      find $BACKUP_DIR -name "mysql-backup-*.sql.gz" -type f -mtime +{{ .Values.backup.retention.days }} -delete
+                    fi
+                    
+                    # Upload to S3 if enabled
+                    {{- if .Values.backup.s3.enabled }}
+                    echo "Uploading backup to S3..."
+                    export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+                    export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+                    
+                    # Set S3 endpoint if specified
+                    {{- if .Values.backup.s3.endpoint }}
+                    export AWS_ENDPOINT_URL="{{ .Values.backup.s3.endpoint }}"
+                    {{- end }}
+                    
+                    aws s3 cp "$BACKUP_DIR/$BACKUP_FILENAME" \
+                      s3://{{ .Values.backup.s3.bucket }}/{{ include "mysql.fullname" . }}/$(date +%Y/%m)/
+                    {{- end }}
+                  else
+                    echo "Backup failed!"
+                    exit 1
+                  fi
+              env:
+                - name: MYSQL_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "mysql.secretName" . }}
+                      key: mysql-root-password
+                {{- if .Values.backup.s3.enabled }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "mysql.fullname" . }}-backup-s3
+                      key: aws-access-key-id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "mysql.fullname" . }}-backup-s3
+                      key: aws-secret-access-key
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.backup.s3.region | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: backup-volume
+                  mountPath: /backup
+          volumes:
+            - name: backup-volume
+              {{- if .Values.backup.persistence.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ include "mysql.fullname" . }}-backup
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+          restartPolicy: OnFailure
+{{- end }}

@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: wordpress
+  namespace: monitoring
+  labels:
+    prometheus: service-monitor
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wordpress
+  namespaceSelector:
+    matchNames:
+      - default
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mysql
+  namespace: monitoring
+  labels:
+    prometheus: service-monitor
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  namespaceSelector:
+    matchNames:
+      - default
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

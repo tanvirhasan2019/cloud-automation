@@ -1,0 +1,28 @@
+apiVersion: v2
+name: mysql
+description: A Helm chart for MySQL with high-availability configuration
+type: application
+version: 1.0.0
+appVersion: "8.0.32"
+kubeVersion: ">=1.19.0-0"
+home: https://www.mysql.com/
+icon: https://www.mysql.com/common/logos/logo-mysql-170x115.png
+keywords:
+  - mysql
+  - database
+  - sql
+  - cluster
+  - high-availability
+  - replication
+sources:
+  - https://github.com/mysql/mysql-server
+  - https://github.com/bitnami/containers/tree/main/bitnami/mysql
+maintainers:
+  - name: DevOps Team
+    email: devops@example.com
+dependencies:
+  - name: common
+    version: "1.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+annotations:
+  category: Database

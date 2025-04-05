@@ -1,0 +1,86 @@
+# Staging Environment Override Values
+
+## Global parameters
+global:
+  storageClass: "managed-standard"
+
+## WordPress Configuration
+resources:
+  limits:
+    cpu: 800m
+    memory: 1Gi
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+## Autoscaling Parameters
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPU: 75
+  targetMemory: 75
+
+## Redis cache parameters
+redis:
+  enabled: true
+  architecture: replication
+  master:
+    persistence:
+      size: 10Gi
+  replica:
+    replicaCount: 1
+    persistence:
+      size: 10Gi
+
+## Database Parameters
+mysql:
+  enabled: true
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1Gi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+  secondary:
+    replicaCount: 1
+
+## Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+## Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  persistence:
+    enabled: true
+    storageClass: "managed-standard"
+    size: 50Gi
+
+## Monitoring and Logging
+prometheus:
+  metrics:
+    enabled: true
+  operator:
+    serviceMonitor:
+      enabled: true
+
+logging:
+  fluentd:
+    enabled: true
+  elasticsearch:
+    enabled: true
+  kibana:
+    enabled: true
+
+## TLS Configuration
+tls:
+  enabled: true
+  certificateSecretName: wordpress-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer

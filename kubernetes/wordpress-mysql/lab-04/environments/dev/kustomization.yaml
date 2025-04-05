@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: wordpress-dev
+
+resources:
+  - ../base
+
+patchesStrategicMerge:
+  - patches/wordpress-deployment-patch.yaml
+  - patches/mysql-statefulset-patch.yaml
+
+configMapGenerator:
+  - name: wordpress-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=development
+      - WP_DEBUG=true
+      - WP_DEBUG_LOG=true
+      - WP_DEBUG_DISPLAY=true
+
+secretGenerator:
+  - name: wordpress-credentials
+    behavior: merge
+    type: Opaque
+    literals:
+      - WP_ADMIN_USERNAME=admin
+      - WP_ADMIN_PASSWORD=dev-password
+
+images:
+  - name: docker.io/bitnami/wordpress
+    newTag: 6.4.0-debian-11
+  - name: docker.io/bitnami/mysql
+    newTag: 8.0.32-debian-11

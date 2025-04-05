@@ -1,0 +1,254 @@
+## Global parameters
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+## MySQL Image parameters
+image:
+  registry: docker.io
+  repository: bitnami/mysql
+  tag: 8.0.32
+  pullPolicy: IfNotPresent
+  debug: false
+
+## MySQL Authentication parameters
+auth:
+  rootPassword: ""
+  username: bn_wordpress
+  password: ""
+  database: bitnami_wordpress
+  replicationUser: replicator
+  replicationPassword: ""
+  existingSecret: ""
+
+## StatefulSet parameters
+replicaCount: 3
+podManagementPolicy: OrderedReady
+updateStrategy: RollingUpdate
+
+## MySQL common configuration
+configuration: |-
+  [mysqld]
+  default_authentication_plugin=mysql_native_password
+  skip-name-resolve
+  explicit_defaults_for_timestamp
+  basedir=/opt/bitnami/mysql
+  plugin_dir=/opt/bitnami/mysql/lib/plugin
+  port=3306
+  socket=/opt/bitnami/mysql/tmp/mysql.sock
+  datadir=/bitnami/mysql/data
+  tmpdir=/opt/bitnami/mysql/tmp
+  max_allowed_packet=16M
+  bind-address=*
+  pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
+  log-error=/opt/bitnami/mysql/logs/mysqld.log
+  character-set-server=UTF8
+  collation-server=utf8_general_ci
+  
+  # Replication configuration
+  server-id={{ index (split "-" .Release.Name) 0 }}{{ index (split "-" (include "mysql.fullname" .)) 1 }}
+  binlog_format=row
+  log_bin=mysql-bin
+  binlog_expire_logs_seconds=604800
+  gtid_mode=ON
+  enforce_gtid_consistency=ON
+  
+  # Slow query log
+  slow_query_log=1
+  slow_query_log_file=/opt/bitnami/mysql/logs/mysqld-slow.log
+  long_query_time=2
+  
+  # InnoDB settings
+  innodb_buffer_pool_size=256M
+  innodb_log_file_size=128M
+  innodb_flush_log_at_trx_commit=1
+  innodb_flush_method=O_DIRECT
+  
+  # Connection settings
+  max_connections=151
+  
+  # MyISAM settings
+  key_buffer_size=32M
+  
+  [client]
+  port=3306
+  socket=/opt/bitnami/mysql/tmp/mysql.sock
+  default-character-set=UTF8
+  plugin_dir=/opt/bitnami/mysql/lib/plugin
+  
+  [manager]
+  port=3306
+  socket=/opt/bitnami/mysql/tmp/mysql.sock
+  pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
+
+## Persistence parameters
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 20Gi
+  annotations: {}
+  selector: {}
+
+## Service parameters
+service:
+  type: ClusterIP
+  port: 3306
+  annotations: {}
+
+## Headless service
+headless:
+  annotations: {}
+
+## Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "mysql"
+
+## Security context parameters
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsNonRoot: true
+
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+## Resources limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+## Liveness and Readiness probes
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 60
+  successThreshold: 1
+
+## Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+## Node Selector, Affinity and Tolerations
+nodeSelector: {}
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: mysql
+            app.kubernetes.io/instance: {{ .Release.Name }}
+        topologyKey: kubernetes.io/hostname
+tolerations: []
+
+## Pod Topology Spread Constraints
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: mysql
+
+## Init containers
+initContainers: []
+
+## Sidecars
+sidecars: []
+
+## Extra volumes and volume mounts
+extraVolumes: []
+extraVolumeMounts: []
+
+## Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9104"
+
+## Network Policy
+networkPolicy:
+  enabled: true
+  allowExternal: true
+
+## Metrics exporter parameters
+metrics:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: prom/mysqld-exporter
+    tag: v0.14.0
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+
+## Backup configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  image:
+    registry: docker.io
+    repository: bitnami/mysqldump
+    tag: latest
+    pullPolicy: IfNotPresent
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 20Gi
+  retention:
+    days: 7
+    copies: 3
+  configuration:
+    databases: []  # Empty array means all databases
+    options: "--single-transaction --flush-logs"
+  s3:
+    enabled: false
+    bucket: ""
+    region: ""
+    endpoint: ""
+    accessKey: ""
+    secretKey: ""

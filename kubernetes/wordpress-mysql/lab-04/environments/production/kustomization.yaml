@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: wordpress-production
+
+resources:
+  - ../base
+
+patchesStrategicMerge:
+  - patches/wordpress-deployment-patch.yaml
+  - patches/mysql-statefulset-patch.yaml
+  - patches/wordpress-hpa-patch.yaml
+
+configMapGenerator:
+  - name: wordpress-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=production
+      - WP_DEBUG=false
+      - WP_DEBUG_LOG=false
+      - WP_DEBUG_DISPLAY=false
+
+images:
+  - name: docker.io/bitnami/wordpress
+    newTag: 6.4.0-debian-11
+  - name: docker.io/bitnami/mysql
+    newTag: 8.0.32-debian-11

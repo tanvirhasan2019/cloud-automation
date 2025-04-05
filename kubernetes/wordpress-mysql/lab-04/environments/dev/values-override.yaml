@@ -1,0 +1,60 @@
+# Development Environment Override Values
+
+## Global parameters
+global:
+  storageClass: "standard"
+
+## WordPress Configuration
+resources:
+  limits:
+    cpu: 400m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+## Autoscaling Parameters
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPU: 80
+  targetMemory: 80
+
+## Redis cache parameters
+redis:
+  enabled: false
+
+## Database Parameters
+mysql:
+  enabled: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 400m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  secondary:
+    replicaCount: 0
+
+## Backup Configuration
+backup:
+  enabled: false
+
+## Monitoring and Logging
+prometheus:
+  metrics:
+    enabled: true
+  operator:
+    serviceMonitor:
+      enabled: true
+
+logging:
+  fluentd:
+    enabled: false
+  elasticsearch:
+    enabled: false
+  kibana:
+    enabled: false
