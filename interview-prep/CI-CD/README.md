@@ -92,3 +92,47 @@ jobs:
           node-version: '18'
       - run: npm install
       - run: npm test
+
+
+# 🚀 CI/CD Pipeline – Interview Preparation
+
+This section focuses on GitLab CI YAML configuration and a hands-on task list using popular CI/CD tools.
+
+---
+
+## 🧾 GitLab CI Example
+
+```yaml
+stages:
+  - build
+  - test
+
+build_job:
+  stage: build
+  script:
+    - npm install
+
+test_job:
+  stage: test
+  script:
+    - npm test
+
+| Task                                      | Tool           |
+| ----------------------------------------- | -------------- |
+| Create a CI/CD pipeline for a Node.js app | GitHub Actions |
+| Deploy to AWS EC2 or S3                   | GitLab CI      |
+| Send build status to Slack                | Jenkins        |
+| Use Docker executor to build images       | CircleCI       |
+
+
+✅ Final Tips
+Be ready to whiteboard or explain a pipeline from scratch
+
+Mention any use of rollback strategies or approval workflows
+
+Highlight performance optimizations (parallel jobs, caching)
+
+Know how to debug failed jobs and use logs effectively
+
+Emphasize real-world impact and team collaboration
+
