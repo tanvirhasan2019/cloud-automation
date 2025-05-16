@@ -92,6 +92,7 @@ jobs:
           node-version: '18'
       - run: npm install
       - run: npm test
+```
 
 
 # 🚀 CI/CD Pipeline – Interview Preparation
@@ -116,6 +117,8 @@ test_job:
   stage: test
   script:
     - npm test
+```
+
 
 | Task                                      | Tool           |
 | ----------------------------------------- | -------------- |
