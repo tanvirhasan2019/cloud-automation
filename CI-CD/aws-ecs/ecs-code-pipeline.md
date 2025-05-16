@@ -1,4 +1,4 @@
-# AWS ECS CI/CD Best Practices
+# AWS ECS CI/CD (Cloudformation, Code-Pipeline)
 
 ## Table of Contents
 - [Introduction](#introduction)
