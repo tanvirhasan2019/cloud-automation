@@ -1,0 +1,140 @@
+name: CI/CD Pipeline for Node Todo App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '16'
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
+  CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linting
+        run: npm run lint
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Cache build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            build
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
+  security-scan:
+    name: Security Scanning
+    needs: build-test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            build
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+      
+      - name: Build Docker image for scanning
+        run: docker build -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} .
+      
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  deploy-to-aws:
+    name: Deploy to AWS
+    needs: security-scan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+      
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+          --query taskDefinition > task-definition.json
+      
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+      
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+      
+      - name: Post-deployment verification
+        run: |
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }}
+          echo "Deployment completed successfully!"

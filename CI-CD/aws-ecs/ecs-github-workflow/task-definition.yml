@@ -1,0 +1,76 @@
+{
+  "family": "node-todo-app",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "node-todo-app",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/node-todo-app:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "MONGO_URI",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/node-todo-app/MONGO_URI"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/node-todo-app",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 5
+      },
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 65535,
+          "hardLimit": 65535
+        }
+      ]
+    }
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "tags": [
+    {
+      "key": "Environment",
+      "value": "Production"
+    },
+    {
+      "key": "Application",
+      "value": "node-todo-app"
+    }
+  ]
+}
